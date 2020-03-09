@@ -60,14 +60,14 @@ team_t team = {
 #define GET(p) (* (unsigned int *)(p)) //reads and writes to heap
 #define PUT(p, val) (*(unsigned int *)(p) = (val))
 
-#define GET_SIZE(p) (GET(p) & !-0x7) //gets size/payload fields from pointer
+#define GET_SIZE(p) (GET(p) & ~0x7) //gets size/payload fields from pointer
 #define GET_ALLOC(p) (GET(p) & 0x1)
 
-#define HDRP(bp) ((char *) (bp) - WSIZE) // header and footer addresses
-#define FTRP(bp) ((char *) (bp) + GET_SIZE(HDRP(bp)) - DSIZE)
+#define HDRP(bp) ((char *)(bp) - WSIZE) // header and footer addresses
+#define FTRP(bp) ((char *)(bp) + GET_SIZE(HDRP(bp)) - DSIZE)
 
-#define NEXT_BLKP(bp) ((char *) (bp) + GET_SIZE(((char*) (bp) - WSIZE)))
-#define PREV_BLKP(bp) ((char *) (bp) - GET_SIZE(((char *) (bp) - DSIZE)))
+#define NEXT_BLKP(bp) ((char *)(bp) + GET_SIZE(((char*) (bp) - WSIZE)))
+#define PREV_BLKP(bp) ((char *)(bp) - GET_SIZE(((char *) (bp) - DSIZE)))
 
 
 //GLOBAL VARS
@@ -78,14 +78,13 @@ static char *heap_listp; //points to the prologue block
  */
 int mm_init(void)
 {
-    
     if ((heap_listp = mem_sbrk(4*WSIZE)) == (void *)-1) return -1;
     PUT(heap_listp, 0);
     PUT(heap_listp + (1*WSIZE), PACK(DSIZE, 1));
     PUT(heap_listp + (2*WSIZE), PACK(DSIZE, 1));
     PUT(heap_listp + (3*WSIZE), PACK(0,1));
     heap_listp += (2*WSIZE);
-    if(extend_heap(CHUNKSIZE/WSIZE) == NULL) return -1; //warning here abt comparison?
+    if(extend_heap(CHUNKSIZE/WSIZE) == NULL) return -1;
     return 0;
 }
 
@@ -102,13 +101,13 @@ void *mm_malloc(size_t size)
     if(size<=DSIZE) asize = 2*DSIZE;
     else asize = DSIZE * ((size + (DSIZE) + (DSIZE-1))/DSIZE);
     
-    if((bp = find_fit(asize)) != NULL){ //warning on this line abt comparison
+    if((bp = find_fit(asize)) != NULL){
         place(bp, asize);
         return bp;
     }
     
     extendsize = MAX(asize, CHUNKSIZE);
-    if((bp = extend_heap(extendsize/WSIZE)) == NULL) return NULL; //warning here
+    if((bp = extend_heap(extendsize/WSIZE)) == NULL) return NULL;
     place(bp, asize);
     return bp;
 }
