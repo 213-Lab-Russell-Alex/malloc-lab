@@ -234,8 +234,8 @@ static void place(void *bp, size_t asize){
         PUT(PREV_BLKP_FREE(bp), prev_free);
     }
     else{
-        PUT(NEXT_BLKP_FREE(*(prev_free)), next_free); //connect remaining free list
-        PUT(PREV_BLKP_FREE(*(next_free)), prev_free);
+        PUT(NEXT_BLKP_FREE(prev_free), next_free); //connect remaining free list
+        PUT(PREV_BLKP_FREE(next_free), prev_free);
         
         
         PUT(HDRP(bp), PACK(csize, 1)); //set whole block to allocated
