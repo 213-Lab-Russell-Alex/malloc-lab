@@ -188,7 +188,7 @@ static void *coalesce(void *bp){
     char *prev_ptr;
     if(prev_alloc && next_alloc) return bp;
     else if(prev_alloc && !next_alloc){
-        next_ptr = NEXT_BLKP_FREE(NEXT_BLKP_FREE(bp));
+        next_ptr = NEXT_BLKP_FREE(NEXT_BLKP_ALL(bp));
         PUT(NEXT_BLKP_FREE(bp), next_ptr);
         
         size += GET_SIZE(HDRP(NEXT_BLKP_ALL(bp)));
@@ -197,7 +197,7 @@ static void *coalesce(void *bp){
     }
     else if(!prev_alloc && next_alloc){
         next_ptr = NEXT_BLKP_FREE(bp);
-        PUT(NEXT_BLKP_FREE(PREV_BLKP_FREE(bp)), next_ptr); //could try using blkp_all but should work the same
+        PUT(NEXT_BLKP_FREE(PREV_BLKP_ALL(bp)), next_ptr); //could try using blkp_all but should work the same
         
         size += GET_SIZE(HDRP(PREV_BLKP_ALL(bp)));
         PUT(FTRP(bp), PACK(size, 0));
@@ -205,8 +205,8 @@ static void *coalesce(void *bp){
         bp = PREV_BLKP_ALL(bp);
     }
     else{
-        next_ptr = NEXT_BLKP_FREE(NEXT_BLKP_FREE(bp));
-        PUT(NEXT_BLKP_FREE(PREV_BLKP_FREE(bp)), next_ptr);
+        next_ptr = NEXT_BLKP_FREE(NEXT_BLKP_ALL(bp));
+        PUT(NEXT_BLKP_FREE(PREV_BLKP_ALL(bp)), next_ptr);
         
         size += GET_SIZE(HDRP(PREV_BLKP_ALL(bp))) + GET_SIZE(FTRP(NEXT_BLKP_ALL(bp)));
         PUT(HDRP(PREV_BLKP_ALL(bp)), PACK(size, 0));
