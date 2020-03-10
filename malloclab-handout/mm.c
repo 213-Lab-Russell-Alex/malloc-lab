@@ -70,8 +70,8 @@ team_t team = {
 #define NEXT_BLKP_ALL(bp) ((char *)(bp) + GET_SIZE(((char*) (bp) - WSIZE)))
 #define PREV_BLKP_ALL(bp) ((char *)(bp) - GET_SIZE(((char *) (bp) - DSIZE)))
 
-#define NEXT_BLKP_FREE(bp) ((char *)(bp) + WSIZE)
-#define PREV_BLKP_FREE(bp) ((char *)(bp))
+#define NEXT_BLKP_FREE(bp) ((bp) + WSIZE)
+#define PREV_BLKP_FREE(bp) (bp)
 
 //GLOBAL VARS
 static char *heap_listp; //points to the prologue block
@@ -188,7 +188,7 @@ static void *coalesce(void *bp){
     char *prev_ptr;
     if(prev_alloc && next_alloc) return bp;
     else if(prev_alloc && !next_alloc){
-        next_ptr = NEXT_BLKP_FREE(NEXT_BLKP_ALL(bp));
+        next_ptr = GET(NEXT_BLKP_FREE(NEXT_BLKP_ALL(bp)));
         PUT(NEXT_BLKP_FREE(bp), next_ptr);
         
         size += GET_SIZE(HDRP(NEXT_BLKP_ALL(bp)));
@@ -196,7 +196,7 @@ static void *coalesce(void *bp){
         PUT(FTRP(bp), PACK(size, 0));
     }
     else if(!prev_alloc && next_alloc){
-        next_ptr = NEXT_BLKP_FREE(bp);
+        next_ptr = GET(NEXT_BLKP_FREE(bp));
         PUT(NEXT_BLKP_FREE(PREV_BLKP_ALL(bp)), next_ptr); //could try using blkp_all but should work the same
         
         size += GET_SIZE(HDRP(PREV_BLKP_ALL(bp)));
@@ -205,7 +205,7 @@ static void *coalesce(void *bp){
         bp = PREV_BLKP_ALL(bp);
     }
     else{
-        next_ptr = NEXT_BLKP_FREE(NEXT_BLKP_ALL(bp));
+        next_ptr = GET(NEXT_BLKP_FREE(GET(NEXT_BLKP_ALL(bp))));
         PUT(NEXT_BLKP_FREE(PREV_BLKP_ALL(bp)), next_ptr);
         
         size += GET_SIZE(HDRP(PREV_BLKP_ALL(bp))) + GET_SIZE(FTRP(NEXT_BLKP_ALL(bp)));
@@ -218,7 +218,7 @@ static void *coalesce(void *bp){
 
 static void *find_fit(size_t asize){
     void *bp;
-    for(bp = heap_listp; bp != NULL; bp = NEXT_BLKP_FREE(bp)){
+    for(bp = heap_listp; bp != NULL; bp = GET(NEXT_BLKP_FREE(bp))){
         if(asize <= GET_SIZE(HDRP(bp))){
             return bp;
         }
@@ -228,8 +228,8 @@ static void *find_fit(size_t asize){
 
 static void place(void *bp, size_t asize){
     size_t csize = GET_SIZE(HDRP(bp));
-    char *next_free = NEXT_BLKP_FREE(bp); //store the prev/next free blocks
-    char *prev_free = PREV_BLKP_FREE(bp);
+    char *next_free = GET(NEXT_BLKP_FREE(bp)); //store the prev/next free blocks
+    char *prev_free = GET(PREV_BLKP_FREE(bp));
     
     if((csize-asize) >= (2*DSIZE)){ //if leftover bits can make own block (at least 16 bytes)
         PUT(HDRP(bp), PACK(asize, 1));
