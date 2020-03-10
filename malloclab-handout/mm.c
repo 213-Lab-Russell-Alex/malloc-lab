@@ -90,7 +90,7 @@ int mm_init(void)
     if(extend_heap(CHUNKSIZE/WSIZE) == NULL) return -1;
     
     PUT(heap_listp, NULL); //should put NULL into the first word, check size tho
-    PUT(heap_listp + WSIZE, NULL) //setting "next" pointer
+    PUT(heap_listp + WSIZE, NULL); //setting "next" pointer
     
     return 0;
 }
@@ -129,6 +129,8 @@ void mm_free(void *ptr)
     PUT(FTRP(ptr), PACK(size, 0));
     coalesce(ptr);
     
+    char *prev_iterator;
+    char *next_iterator;
     prev_iterator = PREV_BLKP_ALL(ptr); //finding prev free block in order
     while (GET_ALLOC(HDRP(prev_iterator))){
         prev_iterator = PREV_BLKP_ALL(ptr);
@@ -217,8 +219,8 @@ static void *find_fit(size_t asize){
 
 static void place(void *bp, size_t asize){
     size_t csize = GET_SIZE(HDRP(bp));
-    next_free = NEXT_BLKP_FREE(bp); //store the prev/next free blocks
-    prev_free = PREV_BLKP_FREE(bp);
+    char *next_free = NEXT_BLKP_FREE(bp); //store the prev/next free blocks
+    char *prev_free = PREV_BLKP_FREE(bp);
     
     if((csize-asize) >= (2*DSIZE)){ //if leftover bits can make own block (at least 16 bytes)
         PUT(HDRP(bp), PACK(asize, 1));
