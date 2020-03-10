@@ -70,7 +70,7 @@ team_t team = {
 #define NEXT_BLKP_ALL(bp) ((char *)(bp) + GET_SIZE(((char*) (bp) - WSIZE)))
 #define PREV_BLKP_ALL(bp) ((char *)(bp) - GET_SIZE(((char *) (bp) - DSIZE)))
 
-#define NEXT_BLKP_FREE(bp) ((bp) + WSIZE)
+#define NEXT_BLKP_FREE(bp) (bp + WSIZE)
 #define PREV_BLKP_FREE(bp) (bp)
 
 //GLOBAL VARS
@@ -197,7 +197,8 @@ static void *coalesce(void *bp){
     }
     else if(!prev_alloc && next_alloc){
         next_ptr = GET(NEXT_BLKP_FREE(bp));
-        PUT(NEXT_BLKP_FREE(PREV_BLKP_ALL(bp)), next_ptr); //could try using blkp_all but should work the same
+        next_ptr = NEXT_BLKP_ALL(bp);
+        PUT(NEXT_BLKP_FREE(PREV_BLKP_ALL(bp)), next_ptr);
         
         size += GET_SIZE(HDRP(PREV_BLKP_ALL(bp)));
         PUT(FTRP(bp), PACK(size, 0));
@@ -205,7 +206,7 @@ static void *coalesce(void *bp){
         bp = PREV_BLKP_ALL(bp);
     }
     else{
-        next_ptr = GET(NEXT_BLKP_FREE(GET(NEXT_BLKP_ALL(bp))));
+        next_ptr = GET(NEXT_BLKP_FREE(NEXT_BLKP_ALL(bp)));
         PUT(NEXT_BLKP_FREE(PREV_BLKP_ALL(bp)), next_ptr);
         
         size += GET_SIZE(HDRP(PREV_BLKP_ALL(bp))) + GET_SIZE(FTRP(NEXT_BLKP_ALL(bp)));
