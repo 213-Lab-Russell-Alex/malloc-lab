@@ -89,7 +89,7 @@ int mm_init(void)
     heap_listp += (2*WSIZE);
     if(extend_heap(CHUNKSIZE/WSIZE) == NULL) return -1;
     
-    PUT(heap_listp, NULL); //should put NULL into the first word, check size tho
+    PUT(heap_listp, NULL); //setting prev pointer
     PUT(heap_listp + WSIZE, NULL); //setting "next" pointer
     
     return 0;
@@ -209,7 +209,7 @@ static void *coalesce(void *bp){
 
 static void *find_fit(size_t asize){
     void *bp;
-    for(bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP_FREE(bp)){
+    for(bp = heap_listp; bp != NULL; bp = NEXT_BLKP_FREE(bp)){
         if(asize <= GET_SIZE(HDRP(bp))){
             return bp;
         }
