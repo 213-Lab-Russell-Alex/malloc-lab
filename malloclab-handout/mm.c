@@ -127,7 +127,6 @@ void mm_free(void *ptr)
     size_t size = GET_SIZE(HDRP(ptr));
     PUT(HDRP(ptr), PACK(size, 0));
     PUT(FTRP(ptr), PACK(size, 0));
-    coalesce(ptr);
     
     char *prev_iterator;
     char *next_iterator;
@@ -143,8 +142,7 @@ void mm_free(void *ptr)
     }
     PUT(NEXT_BLKP_FREE(ptr), next_iterator);
     
-    
-    
+    coalesce(ptr);
 }
 
 /*
@@ -186,19 +184,30 @@ static void *coalesce(void *bp){
     size_t prev_alloc = GET_ALLOC(FTRP(PREV_BLKP_ALL(bp)));
     size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP_ALL(bp)));
     size_t size = GET_SIZE(HDRP(bp));
+    char *next_ptr;
+    char *prev_ptr;
     if(prev_alloc && next_alloc) return bp;
     else if(prev_alloc && !next_alloc){
+        next_ptr = NEXT_BLKP_FREE(NEXT_BLKP_FREE(bp));
+        PUT(NEXT_BLKP_FREE(bp), next_ptr);
+        
         size += GET_SIZE(HDRP(NEXT_BLKP_ALL(bp)));
         PUT(HDRP(bp), PACK(size, 0));
         PUT(FTRP(bp), PACK(size, 0));
     }
     else if(!prev_alloc && next_alloc){
+        next_ptr = NEXT_BLKP_FREE(bp);
+        PUT(NEXT_BLKP_FREE(PREV_BLKP_FREE(bp)), next_ptr); //could try using blkp_all but should work the same
+        
         size += GET_SIZE(HDRP(PREV_BLKP_ALL(bp)));
         PUT(FTRP(bp), PACK(size, 0));
         PUT(HDRP(PREV_BLKP_ALL(bp)), PACK(size, 0));
         bp = PREV_BLKP_ALL(bp);
     }
     else{
+        next_ptr = NEXT_BLKP_FREE(NEXT_BLKP_FREE(bp));
+        PUT(NEXT_BLKP_FREE(PREV_BLKP_FREE(bp)), next_ptr);
+        
         size += GET_SIZE(HDRP(PREV_BLKP_ALL(bp))) + GET_SIZE(FTRP(NEXT_BLKP_ALL(bp)));
         PUT(HDRP(PREV_BLKP_ALL(bp)), PACK(size, 0));
         PUT(FTRP(NEXT_BLKP_ALL(bp)), PACK(size, 0));
@@ -238,7 +247,7 @@ static void place(void *bp, size_t asize){
         PUT(PREV_BLKP_FREE(next_free), prev_free);
         
         
-        PUT(HDRP(bp), PACK(csize, 1)); //set whole block to allocated
+        PUT(HDRP(bp), PACK(csize, 1)); //set entire block to allocated
         PUT(FTRP(bp), PACK(csize, 1));
     }
 }
